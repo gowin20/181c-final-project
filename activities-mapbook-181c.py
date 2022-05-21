@@ -26,32 +26,38 @@ Folder Structure
 # Set Folder Paths and Environment Variables
 folder_path = r''
 
-data_folder = os.path.join(folder_path, "ProjectData")
-
-arcpy.env.workspace = data_folder
-
-aprx = arcpy.mp.ArcGISProject(os.path.join(data_folder, "activities-mapbook-181c.aprx"))
-
-activity_csv = os.path.join(data_folder, "activity-data.csv")
-
-output_folder = os.path.join(folder_path, "output")
-
-route_save_path = os.path.join(data_folder, r"activities-mapbook-181c.gdb\temp_route")
+arcpy.env.workspace = folder_path
 
 arcpy.env.overwriteOutput = True
 
+data_folder = os.path.join(folder_path, "ProjectData")
+
+activity_csv = os.path.join(data_folder, "activity-data-TESTING.csv")
+
+route_save_path = os.path.join(data_folder, r"activities-mapbook-181c.gdb\temp_route2")
+route_layer_save_path = os.path.join(data_folder, r"activities-mapbook-181c.gdb\temp_route_layer")
+
+output_folder = os.path.join(folder_path, "output")
+
+#Create output PDFs
+
+tmp_PDF_path = os.path.join(output_folder,"tmp.pdf")
+
+final_PDF_path = os.path.join(output_folder,"mapbook.pdf")
+
+if os.path.exists(final_PDF_path):
+    os.remove(final_PDF_path)
+
+final_PDF = arcpy.mp.PDFDocumentCreate(final_PDF_path)
+
+aprx = arcpy.mp.ArcGISProject(os.path.join(data_folder, "activities-mapbook-181c.aprx"))
+
+m = aprx.listMaps()[0]
+thisLayout = aprx.listLayouts()[0]
 
 # the bruin bear!
 start = (-118.44503670675103, 34.07098667225605)
-# # Diddy Riese for example
-# stop = (-118.44693221539568, 34.06325629059375)
 
-m = aprx.listMaps()[0]
-
-
-#TODO optional convert our csv into a shapefile
-#TODO wrap all of the below code in a cursor to apply it to every point of interest
-#TODO set stop equal to the coordinates of the current cursor iteration
 
 def add_route_to_map(stop_coords: Tuple): 
     """
@@ -98,29 +104,34 @@ def add_route_to_map(stop_coords: Tuple):
     for step in arcpy.da.SearchCursor(textfile, ["Text"]):
         directions.append(step[0])
 
-    # route.save(route_save_path)
-
+    
     # Step 4
+    print(f"route saving : {route.save(route_save_path)}")
 
     #remove the previous route if there is one
     layer = m.listLayers('route_layer')
     if layer:
-        print(layer[0].name)        
+        print(f"Removing old layer named: {layer[0].name}")        
         m.removeLayer(layer[0])
-    route_layer = arcpy.MakeFeatureLayer_management(route, 'route_layer')[0]
-
-    #add current generated route
-    m.addLayer(route_layer)
+    route_layer = arcpy.MakeFeatureLayer_management(route, 'route_layer')
+    print(f"type of route_layer is {type(route_layer)}")
+    print(f"type of route_layer[0] is {type(route_layer[0])}")
+    print(f"type of route_layer.dataSource is {type(route_layer[0].dataSource)}")
+    print(f'route_layer data source is {route_layer[0].dataSource}')
+    layer_file = arcpy.SaveToLayerFile_management(route_layer)
     
+    #add current generated route
+    print(f"current layers in map before add : {[l.name for l in m.listLayers()]}")
+    print(f"using func addLayer: {m.addLayer(route_layer[0])}")
+    #print(f"add data from path: {m.addDataFromPath(layer_file)}")
+    print(f"current layers in map after add : {[l.name for l in m.listLayers()]}")
+    print(f"layer 0 data source: {m.listLayers()[0].dataSource}")
+    
+
     return directions
 
 
-#Create output PDFs
-
-tmp_PDF_path = os.path.join(output_folder,"tmp.pdf")
-final_PDF_path = os.path.join(output_folder,"mapbook.pdf")
-final_PDF = arcpy.mp.PDFDocumentCreate(final_PDF_path)
-    
+## ===== Main Loop =====    
 with open(activity_csv, 'r') as read_obj:
     csv_reader = reader(read_obj)
     header = next(csv_reader)
@@ -129,13 +140,12 @@ with open(activity_csv, 'r') as read_obj:
         # Iterate over each row after the header in the csv
         for entry_row in csv_reader:
             # row variable is a list that represents a row in csv
-            print(f"Locatoin Name is {entry_row[0]}, its type is {entry_row[3]}, and its coords are ({entry_row[1]}, {entry_row[2]})")
+            print(f"  Location Name is {entry_row[0]}, its type is {entry_row[3]}, and its coords are ({entry_row[1]}, {entry_row[2]})")
             tmp_coord = (float(entry_row[2]), float(entry_row[1]))
-            print(type(tmp_coord))
+            
             #generate directions to this entry, and add the route to the map
             directions = add_route_to_map(stop_coords=tmp_coord)
 
-            thisLayout = aprx.listLayouts()[0]
             thisLayout.exportToPDF(tmp_PDF_path)
 
             final_PDF.appendPages(tmp_PDF_path)
@@ -144,24 +154,17 @@ with open(activity_csv, 'r') as read_obj:
             """
             TODO: use lab 7 code to print a new layout for each
              
-            theTitleLayout = aprx.listLayouts()[0]
-
             theTitleLayout.listElements("TEXT_ELEMENT")[0].text = "directions somehow currently directions is a list so it wont work without conversion"
-            
-            theTitleLayout.exportToPDF(tmpPDF) 
 
-            finalPDF.appendPages(tmpPDF)
             """
 
 
 
 # Remove the tmpPDF at the end of the session
-if os.path.exists(tmp_PDF_path):
-    os.remove(tmp_PDF_path)
+# if os.path.exists(tmp_PDF_path):
+#     os.remove(tmp_PDF_path)
 
 final_PDF.saveAndClose()
 
 
-aprx.save()
-del aprx
-del final_PDF
+# aprx.save() no need tbh
