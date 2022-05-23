@@ -54,6 +54,10 @@ aprx = arcpy.mp.ArcGISProject(os.path.join(data_folder, "activities-mapbook-181c
 
 m = aprx.listMaps()[0]
 thisLayout = aprx.listLayouts()[0]
+theLakeMapFrame = thisLayout.listElements("MAPFRAME_ELEMENT")[0]
+new_extent = arcpy.Extent(-118.6696481, 34.2278393, -118.1968878, 33.9179820)
+theLakeMapFrame.camera.setExtent(new_extent)
+theLakeMapFrame.camera.scale = theLakeMapFrame.camera.scale * 1.3
 
 # the bruin bear!
 start = (-118.44503670675103, 34.07098667225605)
@@ -62,14 +66,11 @@ start = (-118.44503670675103, 34.07098667225605)
 def add_route_to_map(stop_coords: Tuple): 
     """
     PARAM: stop_coords (tuple): a pair of coodinates (longitutde, latitude) 
-    
     RETURN: directions: list of strings containing English directions for a navigation system.
-
     1. Creates a new Feature Class (this_route_points) in memory to store the route points
     2. Adds beginning and end coordinates to this_route_points
     3. Computes the route using `FindRoutes_agolservices`
     4. Converts the result of `FindRoutes_agolservices` to a layer object and adds this to the current map 
-        ----THIS ROUTE OBJECT NEEDS TO BE REMOVED AT A LATER POINT IN THE SCRIPT-----
     5. returns the directions list for potential usage in the layout.
     """   
     # Step 1. create feature class (hopefully overwriting exisiting FC in memory)
@@ -114,16 +115,19 @@ def add_route_to_map(stop_coords: Tuple):
         print(f"Removing old layer named: {layer[0].name}")        
         m.removeLayer(layer[0])
     route_layer = arcpy.MakeFeatureLayer_management(route, 'route_layer')
+    
     print(f"type of route_layer is {type(route_layer)}")
     print(f"type of route_layer[0] is {type(route_layer[0])}")
     print(f"type of route_layer.dataSource is {type(route_layer[0].dataSource)}")
     print(f'route_layer data source is {route_layer[0].dataSource}')
-    layer_file = arcpy.SaveToLayerFile_management(route_layer)
-    
+    layer_file = arcpy.SaveToLayerFile_management(route_layer, os.path.join(output_folder, 'route_layer'))
+    print(f"file saved to: {layer_file}")
+    print(f"layer file[0]: {layer_file[0]}")
+
     #add current generated route
     print(f"current layers in map before add : {[l.name for l in m.listLayers()]}")
-    print(f"using func addLayer: {m.addLayer(route_layer[0])}")
-    #print(f"add data from path: {m.addDataFromPath(layer_file)}")
+    # print(f"using func addLayer: {m.addLayer(route_layer[0])}")
+    print(f"add data from path: {m.addDataFromPath(layer_file[0])}")
     print(f"current layers in map after add : {[l.name for l in m.listLayers()]}")
     print(f"layer 0 data source: {m.listLayers()[0].dataSource}")
     
@@ -167,4 +171,4 @@ with open(activity_csv, 'r') as read_obj:
 final_PDF.saveAndClose()
 
 
-# aprx.save() no need tbh
+aprx.save() 
