@@ -1,18 +1,16 @@
 ## Geog 181C 181 Project
 ## May 2022
-## authors:
+## authors: Peter Flanders, George Owen, Seamus Sehres, Grant Linford, Wesley Motlow
 
 
-from typing import Tuple
 import arcpy
 import os
-import json
-import time
 from csv import reader
 
 '''
 Folder Structure
 /181finalproj
+├─── README.txt
 ├─── activities-mapbook-181c.py
 ├─── /ProjectData
      ├─── activities-mapbook-181c.aprx (project file)
@@ -150,12 +148,16 @@ with open(activity_csv, 'r') as read_obj:
             #generate directions to this entry, and add the route to the map
             directions = add_route_to_map(stop_coords=tmp_coord)
 
+            # format directions into a string
             text = "\n".join(directions)
             
+            # add directions into the layout
             theLayout.listElements("TEXT_ELEMENT")[0].text = text 
             
+            # export layout to pdf
             thisLayout.exportToPDF(tmp_PDF_path)
             
+            # append pdf to final_PDF
             final_PDF.appendPages(tmp_PDF_path)
             print(f"Added {entry_row[0]} to mapbook.")
             
