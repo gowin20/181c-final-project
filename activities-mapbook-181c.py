@@ -150,17 +150,23 @@ with open(activity_csv, 'r') as read_obj:
             #generate directions to this entry, and add the route to the map
             directions = add_route_to_map(stop_coords=tmp_coord)
 
+            """
+            SEAMUS LOOK HERE
+            TODO: use lab 7 code to print a new layout for each
+            
+            https://www.geeksforgeeks.org/python-program-to-convert-a-list-to-string/
+            OR
+            text = "\n".join(directions)
+            
+            theLayout.listElements("TEXT_ELEMENT")[0].text = text 
+            """
+          
             thisLayout.exportToPDF(tmp_PDF_path)
-
+            
             final_PDF.appendPages(tmp_PDF_path)
             print(f"Added {entry_row[0]} to mapbook.")
             
-            """
-            TODO: use lab 7 code to print a new layout for each
-             
-            theTitleLayout.listElements("TEXT_ELEMENT")[0].text = "directions somehow currently directions is a list so it wont work without conversion"
-
-            """
+            
 
 
 
