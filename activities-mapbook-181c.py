@@ -2,7 +2,7 @@
 ## May 2022
 ## authors: Peter Flanders, George Owen, Seamus Sehres, Grant Linford, Wesley Motlow
 
-
+import time
 import arcpy
 import os
 from csv import reader
@@ -30,7 +30,7 @@ arcpy.env.overwriteOutput = True
 
 data_folder = os.path.join(folder_path, "ProjectData")
 
-activity_csv = os.path.join(data_folder, "activity-data-TESTING.csv")
+activity_csv = os.path.join(data_folder, "activity-data.csv")
 
 route_save_path = os.path.join(data_folder, r"activities-mapbook-181c.gdb\temp_route2")
 route_layer_save_path = os.path.join(data_folder, r"activities-mapbook-181c.gdb\temp_route_layer")
@@ -53,15 +53,14 @@ aprx = arcpy.mp.ArcGISProject(os.path.join(data_folder, "activities-mapbook-181c
 m = aprx.listMaps()[0]
 thisLayout = aprx.listLayouts()[0]
 theLakeMapFrame = thisLayout.listElements("MAPFRAME_ELEMENT")[0]
-new_extent = arcpy.Extent(-118.6696481, 34.2278393, -118.1968878, 33.9179820)
-theLakeMapFrame.camera.setExtent(new_extent)
+first_extent = arcpy.Extent(-118.6696481, 34.2278393, -118.1968878, 33.9179820)
+theLakeMapFrame.camera.setExtent(first_extent)
 theLakeMapFrame.camera.scale = theLakeMapFrame.camera.scale * 1.3
 
-# the bruin bear!
-start = (-118.44503670675103, 34.07098667225605)
+# Center of UCLA!
+start = (-118.44497818287402, 34.06877178584797) 
 
-
-def add_route_to_map(stop_coords: Tuple): 
+def add_route_to_map(stop_coords): 
     """
     PARAM: stop_coords (tuple): a pair of coodinates (longitutde, latitude) 
     RETURN: directions: list of strings containing English directions for a navigation system.
@@ -83,13 +82,12 @@ def add_route_to_map(stop_coords: Tuple):
     result = arcpy.FindRoutes_agolservices(this_route_points,"Seconds")
     
     print(f"Finding Route, PID: {result.resultID}")
-    print(f"Processing Status: {result.status}")
 
     #sleep while geoprocessing server runs commands
     while result.status < 4:
-        time.sleep(1)
+        time.sleep(2)
         print(f"Processing Status: {result.status}")
-    print(result.getMessages(0))
+    #print(result.getMessages(0))
 
     #variable containing the route
     route = result[1]
@@ -98,37 +96,31 @@ def add_route_to_map(stop_coords: Tuple):
     textfile = result[3]
 
     #python list containing the step-by-step directions
-    directions = []
-
-    for step in arcpy.da.SearchCursor(textfile, ["Text"]):
-        directions.append(step[0])
+    directions = ""
+    for i, step in enumerate(arcpy.da.SearchCursor(textfile, ["Text"])):
+        directions += str(i) + ": " + step[0] + "\n"
 
     
     # Step 4
-    print(f"route saving : {route.save(route_save_path)}")
-
     #remove the previous route if there is one
     layer = m.listLayers('route_layer')
     if layer:
         print(f"Removing old layer named: {layer[0].name}")        
         m.removeLayer(layer[0])
+    
+    #make temporary route_layer file to add to map
+    route.save(route_save_path)
     route_layer = arcpy.MakeFeatureLayer_management(route, 'route_layer')
-    
-    print(f"type of route_layer is {type(route_layer)}")
-    print(f"type of route_layer[0] is {type(route_layer[0])}")
-    print(f"type of route_layer.dataSource is {type(route_layer[0].dataSource)}")
-    print(f'route_layer data source is {route_layer[0].dataSource}')
     layer_file = arcpy.SaveToLayerFile_management(route_layer, os.path.join(output_folder, 'route_layer'))
-    print(f"file saved to: {layer_file}")
-    print(f"layer file[0]: {layer_file[0]}")
 
-    #add current generated route
-    print(f"current layers in map before add : {[l.name for l in m.listLayers()]}")
-    # print(f"using func addLayer: {m.addLayer(route_layer[0])}")
+    #add current generated route_layer file
     print(f"add data from path: {m.addDataFromPath(layer_file[0])}")
-    print(f"current layers in map after add : {[l.name for l in m.listLayers()]}")
-    print(f"layer 0 data source: {m.listLayers()[0].dataSource}")
-    
+
+    #set extent for current route
+    desc = arcpy.Describe('route_layer')
+    new_extent = arcpy.Extent(desc.extent.XMin, desc.extent.YMin, desc.extent.XMax, desc.extent.YMax)
+    theLakeMapFrame.camera.setExtent(new_extent)
+    theLakeMapFrame.camera.scale = theLakeMapFrame.camera.scale * 1.3
 
     return directions
 
@@ -138,7 +130,7 @@ with open(activity_csv, 'r') as read_obj:
     csv_reader = reader(read_obj)
     header = next(csv_reader)
     # Check file as empty
-    if header != None:
+    if header is not None:
         # Iterate over each row after the header in the csv
         for entry_row in csv_reader:
             # row variable is a list that represents a row in csv
@@ -148,11 +140,9 @@ with open(activity_csv, 'r') as read_obj:
             #generate directions to this entry, and add the route to the map
             directions = add_route_to_map(stop_coords=tmp_coord)
 
-            # format directions into a string
-            text = "\n".join(directions)
-            
             # add directions into the layout
-            theLayout.listElements("TEXT_ELEMENT")[0].text = text 
+            thisLayout.listElements("TEXT_ELEMENT")[0].text = directions
+            thisLayout.listElements("TEXT_ELEMENT")[1].text = "Route To: " + entry_row[0]
             
             # export layout to pdf
             thisLayout.exportToPDF(tmp_PDF_path)

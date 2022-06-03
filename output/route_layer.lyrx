@@ -260,7 +260,7 @@
         ],
         "dataConnection" : {
           "type" : "CIMStandardDataConnection",
-          "workspaceConnectionString" : "DATABASE=..\\..\\..\\..\\..\\AppData\\Local\\Temp\\mx24FD737F894A4988BB67A7EB78C30EFD.gdb",
+          "workspaceConnectionString" : "DATABASE=..\\..\\..\\..\\..\\AppData\\Local\\Temp\\mx9AF3E23B878F499CAC5D7EB89851172A.gdb",
           "workspaceFactory" : "FileGDB",
           "dataset" : "ScratchRecordSet",
           "datasetType" : "esriDTFeatureClass"
@@ -292,9 +292,9 @@
                 "color" : {
                   "type" : "CIMRGBColor",
                   "values" : [
-                    127.5,
-                    29.329999999999998,
-                    44.049999999999997,
+                    62.409999999999997,
+                    147.90000000000001,
+                    47.329999999999998,
                     100
                   ]
                 }
