@@ -6,6 +6,15 @@ import time
 import arcpy
 import os
 from csv import reader
+import argparse
+try:
+    from geopy.geocoders import Nominatim
+    geopy_installed = True
+    geolocator = Nominatim(user_agent="activities-mapbook-181c")
+except ImportError:
+    print("missing geopy, so geocoding is unavailable")
+    geopy_installed = False
+
 
 '''
 Folder Structure
@@ -57,8 +66,37 @@ first_extent = arcpy.Extent(-118.6696481, 34.2278393, -118.1968878, 33.9179820)
 theLakeMapFrame.camera.setExtent(first_extent)
 theLakeMapFrame.camera.scale = theLakeMapFrame.camera.scale * 1.3
 
-# Center of UCLA!
-start = (-118.44497818287402, 34.06877178584797) 
+parser = argparse.ArgumentParser(description='Create a mapbook from a location.')
+parser.add_argument('--coords', nargs=2, metavar=('lat', 'long'),
+                    help='two floats, a latitude and a longitude. Separated by a single space.')
+parser.add_argument('--address', type=str, 
+                    help='An address description to be geocoded into a coordinate pair. MUST HAVE QUOTES (i.e. "125 East Lincoln Lane:)')
+parser.add_argument('-t', action='store_true',
+                    help='An boolean to describe if the script it running as a test or full output. Type -t to run as test')
+args = parser.parse_args()
+
+print(args)
+
+if args.t:
+    print("Running as Test. Using activies-data-TESTING.csv")
+    activity_csv = os.path.join(data_folder, "activity-data-TESTING.csv")
+
+# Orgin of our mapbook! 
+# Priority is (1) specified coords, (2) specified address, (3) default coords
+if args.coords:
+    start = (args.coords[1], args.coords[0])
+elif args.address and geopy_installed:
+    location = geolocator.geocode(args.address)
+    if location:
+        start = (location.longitude, location.latitude)
+        print(f'geocoded address is {start}')
+    else:
+        print('Location unable to be geocoded')
+        start = (-118.44497818287402, 34.06877178584797) # Center of UCLA!
+else:
+    start = (-118.44497818287402, 34.06877178584797) # Center of UCLA!
+
+
 
 def add_route_to_map(stop_coords): 
     """
