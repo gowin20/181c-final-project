@@ -2,6 +2,8 @@ Repository containing all files for the GEOG 181C Final Project: Student Activit
 
 The authors of this project were Peter Flanders, George Owen, Wesley Motlow, Grant Linford, and Seamus Sehres.
 
+The goal of this project was to create a student-oriented Activities Locator, curated with activities and destinations for students at UCLA. What makes UCLA a truly unique school to attend, besides the world class academics, are the near endless opportunities for students to eat, drink, and explore the greater Los Angeles area. Some colleges are in places with far fewer opportunities, so this group wanted to highlight what is available to UCLA students.
+
 Getting Started:
 1. First, clone/download this repository.
 2. The required packages are 
