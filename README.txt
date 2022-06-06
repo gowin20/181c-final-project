@@ -4,13 +4,22 @@ The authors of this project were Peter Flanders, George Owen, Wesley Motlow, Gra
 
 The goal of this project was to create a student-oriented Activities Locator, curated with activities and destinations for students at UCLA. What makes UCLA a truly unique school to attend, besides the world class academics, are the near endless opportunities for students to eat, drink, and explore the greater Los Angeles area. Some colleges are in places with far fewer opportunities, so this group wanted to highlight what is available to UCLA students.
 
+In This Folder:
+output/  			              - Folder to which all created mapbook files will be saved. 
+ProjectData/		          	- Folder containing all files necessary for the running of our script. (activity-data.csv, activities-mapbook-181c.aprx, GDB)
+activities-mapbook-181c.py 	- Sole Python Script to be Run at the commmand line as demonstrated below
+example-config.json		      - Example JSON File to help users create their `config.json` file which stores their ArcGIS Developer API Key
+Geog 181C Final Paper.pdf 	- Final Report detailing the development and design of this project.
+Project Presentation.ppx	  - Our Project Presentation where we explained our project, what has been done, and what we want to do.
+.gitignore		            	- Github File
+
 Getting Started:
 1. First, clone/download this repository.
 2. The required packages are 
   - The Python Standard Library
   - arcpy 
 3. Optional Packages include:
-  - geopy (this is a more consistent geocoding service, but a pain to install with ArcGIS Pro's conda envs)
+  - geopy (this is a more consistent geocoding service, but is difficult to install with ArcGIS Pro's conda envs)
 3. If you want to use the --address argument to specify the location of the mapbook, you need to either have installed geopy or you need to add a file called `config.json` in the root directory with your ArcGIS Developer API Key.  
 4. You can run the main script with `python activities-mapbook-181c.py`
 4. This should produce logs in the terminal indicating progress and after ~10min the final mapbook pdf should be created and saved in the output folder.
